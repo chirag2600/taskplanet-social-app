@@ -19,6 +19,7 @@ router.get(
     query('limit').optional().isInt({ min: 1, max: 20 }).toInt(),
     query('sort').optional().isIn(['latest', 'mostLiked', 'mostCommented']),
     query('search').optional().trim(),
+    query('username').optional().trim(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -30,11 +31,22 @@ router.get(
     const limit = req.query.limit || 10;
     const sortKey = req.query.sort || 'latest';
     const search = req.query.search || '';
+    const username = req.query.username || '';
 
     try {
-      const filter = search
-        ? { $or: [{ text: { $regex: search, $options: 'i' } }, { username: { $regex: search, $options: 'i' } }] }
-        : {};
+      const conditions = [];
+      if (search) {
+        conditions.push({
+          $or: [
+            { text: { $regex: search, $options: 'i' } },
+            { username: { $regex: search, $options: 'i' } },
+          ],
+        });
+      }
+      if (username) {
+        conditions.push({ username });
+      }
+      const filter = conditions.length ? { $and: conditions } : {};
 
       let posts;
       let total;
@@ -126,6 +138,71 @@ router.post(
     }
   }
 );
+
+// GET /api/posts/:id — single post
+router.get('/:id', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id).lean();
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    res.json({ post });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch post', error: err.message });
+  }
+});
+
+// PUT /api/posts/:id — update post (owner only)
+router.put(
+  '/:id',
+  auth,
+  [
+    body('text').optional().trim().isLength({ max: 2000 }),
+    body('imageUrl').optional().isString(),
+    body('removeImage').optional().isBoolean(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ message: errors.array()[0].msg });
+    }
+
+    try {
+      const post = await Post.findById(req.params.id);
+      if (!post) return res.status(404).json({ message: 'Post not found' });
+      if (post.username !== req.user.username) {
+        return res.status(403).json({ message: 'You can only edit your own posts' });
+      }
+
+      if (req.body.text !== undefined) post.text = req.body.text.trim();
+      if (req.body.removeImage) post.imageUrl = '';
+      else if (req.body.imageUrl !== undefined) post.imageUrl = req.body.imageUrl;
+
+      if (!post.text && !post.imageUrl) {
+        return res.status(400).json({ message: 'Post must contain text or an image' });
+      }
+
+      await post.save();
+      res.json({ post });
+    } catch (err) {
+      res.status(500).json({ message: 'Failed to update post', error: err.message });
+    }
+  }
+);
+
+// DELETE /api/posts/:id — delete post (owner only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    if (post.username !== req.user.username) {
+      return res.status(403).json({ message: 'You can only delete your own posts' });
+    }
+
+    await post.deleteOne();
+    res.json({ message: 'Post deleted', id: req.params.id });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete post', error: err.message });
+  }
+});
 
 // POST /api/posts/:id/like — toggle like
 router.post('/:id/like', auth, async (req, res) => {

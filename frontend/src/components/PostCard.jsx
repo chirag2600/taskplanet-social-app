@@ -5,20 +5,32 @@ import {
   CardContent,
   Typography,
   Avatar,
-  Button,
   IconButton,
   TextField,
   Collapse,
   Chip,
   Divider,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useSnackbar } from '../context/SnackbarContext';
 import { getAvatarUrl, formatTimeAgo } from '../utils/helpers';
+import EditPostDialog from './EditPostDialog';
 
 function HashtagText({ text }) {
   if (!text) return null;
@@ -38,100 +50,144 @@ function HashtagText({ text }) {
   );
 }
 
-export default function PostCard({ post, onUpdate }) {
+export default function PostCard({ post, onUpdate, onDelete }) {
   const { user, isAuthenticated } = useAuth();
+  const { showSnackbar } = useSnackbar();
   const [commentText, setCommentText] = useState('');
   const [showComments, setShowComments] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
+  const isOwner = user?.username === post.username;
   const isLiked = user && post.likes?.includes(user.username);
   const likeCount = post.likes?.length || 0;
   const commentCount = post.comments?.length || 0;
 
   const handleLike = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      showSnackbar('Sign in to like posts', 'info');
+      return;
+    }
     setLoading(true);
     try {
       const { data } = await api.post(`/posts/${post._id}/like`);
       onUpdate(data.post);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      showSnackbar('Failed to update like', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const handleComment = async () => {
-    if (!commentText.trim() || !isAuthenticated) return;
+    if (!isAuthenticated) {
+      showSnackbar('Sign in to comment', 'info');
+      return;
+    }
+    if (!commentText.trim()) return;
     setLoading(true);
     try {
       const { data } = await api.post(`/posts/${post._id}/comments`, { text: commentText.trim() });
       setCommentText('');
       setShowComments(true);
       onUpdate(data.post);
-    } catch (err) {
-      console.error(err);
+      showSnackbar('Comment added', 'success');
+    } catch {
+      showSnackbar('Failed to add comment', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      await api.delete(`/posts/${post._id}`);
+      onDelete?.(post._id);
+      setDeleteOpen(false);
+    } catch {
+      showSnackbar('Failed to delete post', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card sx={{ mb: 2 }}>
-      <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
-        {/* User header */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
-            <Avatar
-              src={post.profilePic || getAvatarUrl(post.username)}
-              alt={post.username}
-              sx={{ width: 44, height: 44 }}
-            />
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Typography variant="subtitle2" fontWeight={700}>
-                  {post.username}
+    <>
+      <Card sx={{ mb: 2 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
+            <Box sx={{ display: 'flex', gap: 1.5 }}>
+              <Avatar
+                src={post.profilePic || getAvatarUrl(post.username)}
+                alt={post.username}
+                sx={{ width: 44, height: 44 }}
+              />
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    {post.username}
+                  </Typography>
+                  <Chip label="3 Gold" size="small" sx={{ height: 20, fontSize: 10 }} />
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  @{post.username} · {formatTimeAgo(post.createdAt)}
                 </Typography>
-                <Chip label="3 Gold" size="small" sx={{ height: 20, fontSize: 10, bgcolor: '#fef3c7' }} />
               </Box>
-              <Typography variant="caption" color="text.secondary">
-                @{post.username} · {formatTimeAgo(post.createdAt)}
-              </Typography>
             </Box>
+
+            {isOwner && (
+              <>
+                <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+                <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
+                  <MenuItem
+                    onClick={() => {
+                      setMenuAnchor(null);
+                      setEditOpen(true);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <EditIcon fontSize="small" />
+                    </ListItemIcon>
+                    Edit
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      setMenuAnchor(null);
+                      setDeleteOpen(true);
+                    }}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <ListItemIcon>
+                      <DeleteIcon fontSize="small" color="error" />
+                    </ListItemIcon>
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </>
+            )}
           </Box>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ minWidth: 72, py: 0.5, fontSize: 12, boxShadow: 'none' }}
-          >
-            Follow
-          </Button>
-        </Box>
 
-        {/* Post content */}
-        <HashtagText text={post.text} />
+          <HashtagText text={post.text} />
 
-        {post.imageUrl && (
-          <Box
-            component="img"
-            src={post.imageUrl}
-            alt="Post"
-            sx={{ width: '100%', borderRadius: 3, mb: 1.5, maxHeight: 400, objectFit: 'cover' }}
-          />
-        )}
+          {post.imageUrl && (
+            <Box
+              component="img"
+              src={post.imageUrl}
+              alt="Post"
+              sx={{ width: '100%', borderRadius: 3, mb: 1.5, maxHeight: 400, objectFit: 'cover' }}
+            />
+          )}
 
-        <Divider sx={{ my: 1.5 }} />
+          <Divider sx={{ my: 1.5 }} />
 
-        {/* Actions */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <IconButton
-                size="small"
-                onClick={handleLike}
-                disabled={loading || !isAuthenticated}
-                color={isLiked ? 'error' : 'default'}
-              >
+              <IconButton size="small" onClick={handleLike} disabled={loading} color={isLiked ? 'error' : 'default'}>
                 {isLiked ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
               </IconButton>
               <Typography variant="caption" fontWeight={600}>
@@ -150,50 +206,64 @@ export default function PostCard({ post, onUpdate }) {
                 {commentCount}
               </Typography>
             </Box>
-
-            <IconButton size="small">
-              <BookmarkBorderIcon fontSize="small" />
-            </IconButton>
           </Box>
-        </Box>
 
-        {/* Comments section */}
-        <Collapse in={showComments || commentCount > 0}>
-          <Box sx={{ mt: 2 }}>
-            {post.comments?.map((comment, idx) => (
-              <Box key={idx} sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                <Avatar
-                  src={getAvatarUrl(comment.username, 32)}
-                  sx={{ width: 28, height: 28 }}
-                />
-                <Box sx={{ bgcolor: '#f3f4f6', borderRadius: 3, px: 1.5, py: 0.75, flex: 1 }}>
-                  <Typography variant="caption" fontWeight={700} display="block">
-                    @{comment.username}
-                  </Typography>
-                  <Typography variant="body2">{comment.text}</Typography>
+          <Collapse in={showComments || commentCount > 0}>
+            <Box sx={{ mt: 2 }}>
+              {post.comments?.map((comment, idx) => (
+                <Box key={comment._id || idx} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                  <Avatar src={getAvatarUrl(comment.username, 32)} sx={{ width: 28, height: 28 }} />
+                  <Box sx={{ bgcolor: 'action.hover', borderRadius: 3, px: 1.5, py: 0.75, flex: 1 }}>
+                    <Typography variant="caption" fontWeight={700} display="block">
+                      @{comment.username}
+                    </Typography>
+                    <Typography variant="body2">{comment.text}</Typography>
+                  </Box>
                 </Box>
-              </Box>
-            ))}
+              ))}
 
-            {isAuthenticated && (
               <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                 <TextField
                   size="small"
                   fullWidth
-                  placeholder="Write a comment..."
+                  placeholder={isAuthenticated ? 'Write a comment...' : 'Sign in to comment'}
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleComment()}
+                  disabled={!isAuthenticated}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 999 } }}
                 />
-                <Button variant="contained" size="small" onClick={handleComment} disabled={loading}>
+                <Button variant="contained" size="small" onClick={handleComment} disabled={loading || !isAuthenticated}>
                   Send
                 </Button>
               </Box>
-            )}
-          </Box>
-        </Collapse>
-      </CardContent>
-    </Card>
+            </Box>
+          </Collapse>
+        </CardContent>
+      </Card>
+
+      <EditPostDialog
+        post={post}
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        onUpdated={(updated) => {
+          onUpdate(updated);
+          showSnackbar('Post updated', 'success');
+        }}
+      />
+
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+        <DialogTitle>Delete Post?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>This action cannot be undone.</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleDelete} disabled={loading}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

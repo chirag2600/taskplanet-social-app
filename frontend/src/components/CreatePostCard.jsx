@@ -114,7 +114,7 @@ export default function CreatePostCard({ onPostCreated }) {
           variant="outlined"
           sx={{
             mb: 1.5,
-            '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#f9fafb' },
+            '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: 'action.hover' },
           }}
         />
 

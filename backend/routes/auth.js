@@ -77,4 +77,33 @@ router.get('/me', auth, (req, res) => {
   res.json({ user: req.user.toPublicJSON() });
 });
 
+// PUT /api/auth/profile — update profile
+router.put(
+  '/profile',
+  auth,
+  [body('profilePic').optional().isString()],
+  async (req, res) => {
+    try {
+      if (req.body.profilePic !== undefined) {
+        req.user.profilePic = req.body.profilePic;
+      }
+      await req.user.save();
+      res.json({ user: req.user.toPublicJSON() });
+    } catch (err) {
+      res.status(500).json({ message: 'Failed to update profile', error: err.message });
+    }
+  }
+);
+
+// GET /api/auth/users/:username — public user profile
+router.get('/users/:username', async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ user: user.toPublicJSON() });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch user', error: err.message });
+  }
+});
+
 module.exports = router;
