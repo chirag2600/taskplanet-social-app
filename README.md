@@ -108,9 +108,22 @@ App runs at `http://localhost:5173`
 
 ### Frontend — Vercel
 
+**Option A (recommended):** Root directory = `frontend`
+
 1. Import repo on [vercel.com](https://vercel.com)
-2. Root directory: `frontend`
-3. Environment variable: `VITE_API_URL=https://your-backend.onrender.com/api`
+2. Set **Root Directory** to `frontend` (not `./`)
+3. Framework: **Vite** | Build: `npm run build` | Output: `dist`
+4. Environment variable:
+   ```
+   VITE_API_URL=https://your-backend.onrender.com/api
+   ```
+   ⚠️ Must end with `/api` — not just the Render URL.
+
+**Option B:** Root directory = `./` (repo root)
+
+The root `vercel.json` handles building from the `frontend/` folder automatically.
+
+After deploy, set Render `CLIENT_URL` to your Vercel URL (e.g. `https://chirag2600-taskplanet-social-app.vercel.app`).
 
 ## MongoDB Collections
 
