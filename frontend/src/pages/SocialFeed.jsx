@@ -27,6 +27,7 @@ import Header from '../components/Header';
 import CreatePostCard from '../components/CreatePostCard';
 import FilterBar from '../components/FilterBar';
 import PostCard from '../components/PostCard';
+import { layout } from '../theme';
 
 const PAGE_SIZE = 5;
 
@@ -112,15 +113,31 @@ export default function SocialFeed() {
       <Container maxWidth="sm" sx={{ pt: 2, px: { xs: 2, sm: 3 } }}>
         <Header />
 
-        <Box component="form" onSubmit={handleSearch} sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
+        <Box
+          component="form"
+          onSubmit={handleSearch}
+          sx={{
+            display: 'flex',
+            gap: 1,
+            mb: 2,
+            alignItems: 'center',
+            p: 1,
+            bgcolor: 'background.paper',
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: `${layout.radius.md}px`,
+          }}
+        >
           <TextField
             fullWidth
             size="small"
             placeholder="Search posts or users..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
+            variant="standard"
             InputProps={{
-              sx: { borderRadius: 999, bgcolor: 'background.paper' },
+              disableUnderline: true,
+              sx: { fontSize: 14, px: 0.5 },
               endAdornment: searchInput && (
                 <InputAdornment position="end">
                   <IconButton size="small" onClick={clearSearch}>
@@ -132,24 +149,32 @@ export default function SocialFeed() {
           />
           <IconButton
             type="submit"
-            sx={{ bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.dark' } }}
+            size="small"
+            sx={{
+              bgcolor: 'primary.main',
+              color: '#fff',
+              borderRadius: `${layout.radius.sm}px`,
+              '&:hover': { bgcolor: 'primary.dark' },
+            }}
           >
-            <SearchIcon />
+            <SearchIcon fontSize="small" />
           </IconButton>
           <IconButton
+            size="small"
             onClick={toggleTheme}
-            sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider' }}
-            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            sx={{ border: 1, borderColor: 'divider' }}
+            title={isDark ? 'Light mode' : 'Dark mode'}
           >
-            {isDark ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
+            {isDark ? <LightModeOutlinedIcon fontSize="small" /> : <DarkModeOutlinedIcon fontSize="small" />}
           </IconButton>
           {isAuthenticated && (
             <IconButton
+              size="small"
               onClick={() => {
                 logout();
                 showSnackbar('Logged out', 'info');
               }}
-              sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider' }}
+              sx={{ border: 1, borderColor: 'divider' }}
               title="Logout"
             >
               <LogoutIcon fontSize="small" />
@@ -176,24 +201,38 @@ export default function SocialFeed() {
         ) : (
           <Box
             sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 3,
-              p: 2,
+              display: 'flex',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 1.5,
               mb: 2,
-              textAlign: 'center',
+              py: 1.5,
+              px: 2,
+              bgcolor: 'background.paper',
               border: 1,
               borderColor: 'divider',
+              borderLeft: 3,
+              borderLeftColor: 'primary.main',
+              borderRadius: `${layout.radius.sm}px`,
             }}
           >
-            <Typography variant="body2" color="text.secondary" mb={1.5}>
-              Sign in to create posts, like, and comment
-            </Typography>
-            <Button component={RouterLink} to="/login" variant="contained" size="small" sx={{ mr: 1 }}>
-              Sign In
-            </Button>
-            <Button component={RouterLink} to="/signup" variant="outlined" size="small">
-              Sign Up
-            </Button>
+            <Box>
+              <Typography variant="body2" fontWeight={600} gutterBottom>
+                Join the conversation
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Sign in to create posts, like, and comment
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+              <Button component={RouterLink} to="/login" variant="contained" size="small">
+                Sign In
+              </Button>
+              <Button component={RouterLink} to="/signup" variant="outlined" size="small">
+                Sign Up
+              </Button>
+            </Box>
           </Box>
         )}
 
@@ -230,7 +269,7 @@ export default function SocialFeed() {
                   variant="outlined"
                   onClick={() => fetchPosts(page + 1, true)}
                   disabled={loadingMore}
-                  sx={{ borderRadius: 999, px: 4 }}
+                  sx={{ px: 3 }}
                 >
                   {loadingMore ? <CircularProgress size={22} /> : 'Load More'}
                 </Button>

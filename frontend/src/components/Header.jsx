@@ -1,6 +1,5 @@
-import { Box, Typography, Avatar, IconButton, Badge, Chip, Tooltip } from '@mui/material';
+import { Box, Typography, Avatar, IconButton, Tooltip } from '@mui/material';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
-import StarIcon from '@mui/icons-material/Star';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSnackbar } from '../context/SnackbarContext';
@@ -12,45 +11,46 @@ export default function Header() {
   const { showSnackbar } = useSnackbar();
 
   const handleProfileClick = () => {
-    if (isAuthenticated) {
-      navigate('/profile');
-    } else {
-      showSnackbar('Please sign in to view your profile', 'info');
+    if (isAuthenticated) navigate('/profile');
+    else {
+      showSnackbar('Sign in to view your profile', 'info');
       navigate('/login');
     }
   };
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-      <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-        Social
-      </Typography>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        py: 1.5,
+        mb: 1,
+        borderBottom: 1,
+        borderColor: 'divider',
+      }}
+    >
+      <Box>
+        <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
+          Social Feed
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Share updates with the community
+        </Typography>
+      </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Chip
-          icon={<StarIcon sx={{ color: '#f59e0b !important', fontSize: 18 }} />}
-          label="50"
-          size="small"
-          sx={{ bgcolor: 'action.hover', fontWeight: 600, '& .MuiChip-label': { px: 0.5 } }}
-        />
-        <Chip
-          label="₹0.00"
-          size="small"
-          sx={{ bgcolor: 'success.main', color: '#fff', fontWeight: 600, opacity: 0.9 }}
-        />
-        <Tooltip title="No new notifications">
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Tooltip title="Notifications">
           <IconButton size="small" onClick={() => showSnackbar('No new notifications', 'info')}>
-            <Badge variant="dot" color="error">
-              <NotificationsNoneIcon />
-            </Badge>
+            <NotificationsNoneIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title={isAuthenticated ? 'View profile' : 'Sign in'}>
-          <IconButton onClick={handleProfileClick} sx={{ p: 0 }}>
+        <Tooltip title={isAuthenticated ? 'Your profile' : 'Sign in'}>
+          <IconButton onClick={handleProfileClick} sx={{ p: 0.5, ml: 0.5 }}>
             <Avatar
               src={user?.profilePic || getAvatarUrl(user?.username || 'Guest', 64)}
               alt={user?.username || 'Guest'}
-              sx={{ width: 36, height: 36, border: '2px solid', borderColor: 'success.main' }}
+              sx={{ width: 34, height: 34 }}
             />
           </IconButton>
         </Tooltip>

@@ -7,23 +7,20 @@ import {
   TextField,
   Button,
   IconButton,
-  ToggleButton,
-  ToggleButtonGroup,
   CircularProgress,
+  Divider,
 } from '@mui/material';
-import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
-import EmojiEmotionsOutlinedIcon from '@mui/icons-material/EmojiEmotionsOutlined';
-import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
-import SendIcon from '@mui/icons-material/Send';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import api from '../services/api';
 import { fileToBase64 } from '../utils/helpers';
+import { layout } from '../theme';
 
 export default function CreatePostCard({ onPostCreated }) {
   const [text, setText] = useState('');
   const [imagePreview, setImagePreview] = useState('');
   const [imageData, setImageData] = useState('');
-  const [postType, setPostType] = useState('all');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
@@ -74,35 +71,10 @@ export default function CreatePostCard({ onPostCreated }) {
 
   return (
     <Card sx={{ mb: 2 }}>
-      <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-          <Typography variant="subtitle1" fontWeight={600}>
-            Create Post
-          </Typography>
-          <ToggleButtonGroup
-            value={postType}
-            exclusive
-            size="small"
-            onChange={(_, val) => val && setPostType(val)}
-            sx={{
-              '& .MuiToggleButton-root': {
-                borderRadius: '999px !important',
-                px: 2,
-                py: 0.25,
-                fontSize: 12,
-                border: 'none',
-                mx: 0.25,
-              },
-              '& .Mui-selected': {
-                bgcolor: 'primary.main !important',
-                color: '#fff !important',
-              },
-            }}
-          >
-            <ToggleButton value="all">All Posts</ToggleButton>
-            <ToggleButton value="promotions">Promotions</ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
+          New post
+        </Typography>
 
         <TextField
           fullWidth
@@ -114,7 +86,9 @@ export default function CreatePostCard({ onPostCreated }) {
           variant="outlined"
           sx={{
             mb: 1.5,
-            '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: 'action.hover' },
+            '& .MuiOutlinedInput-root': {
+              bgcolor: 'background.default',
+            },
           }}
         />
 
@@ -124,12 +98,26 @@ export default function CreatePostCard({ onPostCreated }) {
               component="img"
               src={imagePreview}
               alt="Preview"
-              sx={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 3 }}
+              sx={{
+                width: '100%',
+                maxHeight: 280,
+                objectFit: 'cover',
+                borderRadius: `${layout.radius.sm}px`,
+                border: 1,
+                borderColor: 'divider',
+              }}
             />
             <IconButton
               size="small"
               onClick={clearImage}
-              sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(0,0,0,0.5)', color: '#fff' }}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                bgcolor: 'rgba(15,23,42,0.7)',
+                color: '#fff',
+                '&:hover': { bgcolor: 'rgba(15,23,42,0.85)' },
+              }}
             >
               <CloseIcon fontSize="small" />
             </IconButton>
@@ -142,42 +130,26 @@ export default function CreatePostCard({ onPostCreated }) {
           </Typography>
         )}
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={handleImageSelect}
-            />
-            <IconButton color="primary" onClick={() => fileInputRef.current?.click()}>
-              <CameraAltOutlinedIcon />
+        <Divider sx={{ mb: 1.5 }} />
+
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleImageSelect} />
+            <IconButton size="small" onClick={() => fileInputRef.current?.click()} title="Add image">
+              <ImageOutlinedIcon fontSize="small" />
             </IconButton>
-            <IconButton color="primary">
-              <EmojiEmotionsOutlinedIcon />
-            </IconButton>
-            <Button
-              startIcon={<CampaignOutlinedIcon />}
-              size="small"
-              sx={{ color: 'text.secondary', display: { xs: 'none', sm: 'inline-flex' } }}
-            >
-              Promote
-            </Button>
+            <Typography variant="caption" color="text.secondary">
+              Text or image required
+            </Typography>
           </Box>
 
           <Button
             variant="contained"
+            size="small"
             disabled={!canPost}
             onClick={handleSubmit}
-            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
-            sx={{
-              px: 3,
-              bgcolor: canPost ? 'primary.main' : '#e5e7eb',
-              color: canPost ? '#fff' : '#9ca3af',
-              boxShadow: 'none',
-              '&:hover': { boxShadow: 'none', bgcolor: canPost ? 'primary.dark' : '#e5e7eb' },
-            }}
+            startIcon={loading ? <CircularProgress size={14} color="inherit" /> : <SendOutlinedIcon />}
+            sx={{ px: 2.5, py: 0.75 }}
           >
             Post
           </Button>

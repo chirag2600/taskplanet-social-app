@@ -8,7 +8,6 @@ import {
   IconButton,
   TextField,
   Collapse,
-  Chip,
   Divider,
   Menu,
   MenuItem,
@@ -31,6 +30,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSnackbar } from '../context/SnackbarContext';
 import { getAvatarUrl, formatTimeAgo } from '../utils/helpers';
 import EditPostDialog from './EditPostDialog';
+import { layout } from '../theme';
 
 function HashtagText({ text }) {
   if (!text) return null;
@@ -116,22 +116,25 @@ export default function PostCard({ post, onUpdate, onDelete }) {
 
   return (
     <>
-      <Card sx={{ mb: 2 }}>
-        <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
+      <Card
+        sx={{
+          mb: 2,
+          transition: 'box-shadow 0.2s',
+          '&:hover': { boxShadow: layout.shadow.cardHover },
+        }}
+      >
+        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
-            <Box sx={{ display: 'flex', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', gap: 1.25 }}>
               <Avatar
                 src={post.profilePic || getAvatarUrl(post.username)}
                 alt={post.username}
-                sx={{ width: 44, height: 44 }}
+                sx={{ width: 40, height: 40 }}
               />
               <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                  <Typography variant="subtitle2" fontWeight={700}>
-                    {post.username}
-                  </Typography>
-                  <Chip label="3 Gold" size="small" sx={{ height: 20, fontSize: 10 }} />
-                </Box>
+                <Typography variant="subtitle2" fontWeight={600} lineHeight={1.3}>
+                  {post.username}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
                   @{post.username} · {formatTimeAgo(post.createdAt)}
                 </Typography>
@@ -179,7 +182,15 @@ export default function PostCard({ post, onUpdate, onDelete }) {
               component="img"
               src={post.imageUrl}
               alt="Post"
-              sx={{ width: '100%', borderRadius: 3, mb: 1.5, maxHeight: 400, objectFit: 'cover' }}
+              sx={{
+                width: '100%',
+                borderRadius: `${layout.radius.sm}px`,
+                mb: 1.5,
+                maxHeight: 400,
+                objectFit: 'cover',
+                border: 1,
+                borderColor: 'divider',
+              }}
             />
           )}
 
@@ -213,7 +224,17 @@ export default function PostCard({ post, onUpdate, onDelete }) {
               {post.comments?.map((comment, idx) => (
                 <Box key={comment._id || idx} sx={{ display: 'flex', gap: 1, mb: 1 }}>
                   <Avatar src={getAvatarUrl(comment.username, 32)} sx={{ width: 28, height: 28 }} />
-                  <Box sx={{ bgcolor: 'action.hover', borderRadius: 3, px: 1.5, py: 0.75, flex: 1 }}>
+                  <Box
+                    sx={{
+                      bgcolor: 'background.default',
+                      borderRadius: `${layout.radius.sm}px`,
+                      border: 1,
+                      borderColor: 'divider',
+                      px: 1.25,
+                      py: 0.75,
+                      flex: 1,
+                    }}
+                  >
                     <Typography variant="caption" fontWeight={700} display="block">
                       @{comment.username}
                     </Typography>
@@ -231,7 +252,6 @@ export default function PostCard({ post, onUpdate, onDelete }) {
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleComment()}
                   disabled={!isAuthenticated}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 999 } }}
                 />
                 <Button variant="contained" size="small" onClick={handleComment} disabled={loading || !isAuthenticated}>
                   Send
