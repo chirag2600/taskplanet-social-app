@@ -22,16 +22,17 @@ const defaultOrigins = [
 ];
 const origins = [...new Set([...allowedOrigins, ...defaultOrigins])];
 
-// Middleware
+// Middleware — allow localhost, configured CLIENT_URL, and all Vercel deployments
 app.use(
   cors({
     origin(origin, callback) {
-      // Allow server-to-server / curl requests with no origin
-      if (!origin || origins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS blocked: ${origin}`));
+      if (!origin) return callback(null, true);
+      if (origins.includes(origin)) return callback(null, true);
+      // Allow any Vercel production or preview URL
+      if (/^https:\/\/[\w.-]+\.vercel\.app$/.test(origin)) {
+        return callback(null, true);
       }
+      callback(null, false);
     },
     credentials: true,
   })
